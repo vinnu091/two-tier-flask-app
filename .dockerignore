@@ -1,0 +1,10 @@
+.git/
+.gitignore
+*.log
+# Ignore sensitive files
+/app/mysql-data/ca-key.pem
+/app/mysql-data/client-key.pem
+/app/mysql-data/private_key.pem
+/app/mysql-data/server-key.pem
+/app/mysql-data/server-key.pem
+/app/mysql-data/private_key.pem

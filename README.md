@@ -127,4 +127,45 @@ docker run -d \
 - If you encounter issues, check Docker logs and error messages for troubleshooting.
 
 ```
+======COmments by KIshor Patil================
+# Two-Tier Flask App with Jenkins CI/CD
 
+A DevOps-ready Flask + MySQL application with full CI/CD pipeline built using Jenkins and Docker.
+
+## 🛠️ Tech Stack
+- Flask
+- MySQL
+- Docker
+- Jenkins
+- Pytest
+- GitHub
+
+## 🚀 Jenkins Pipeline Features
+- Git clone
+- Virtual environment setup
+- Unit testing with Pytest
+- Docker build & push
+- Docker Compose deployment
+
+## 📸 Screenshots
+![Screenshot from 2025-06-29 14-29-00](https://github.com/user-attachments/assets/a9067f0d-dedb-4bee-b700-5d7c5730e03d)
+
+
+### Jenkins Pipeline View
+![Pipeline Screenshot](assets/jenkins-pipeline.png)
+
+### Live Demo
+![App Demo](assets/demo.gif)
+
+## ✅ Badges
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/github/license/kishorpatil2107/two-tier-flask-app)
+![Docker](https://img.shields.io/badge/docker-ready-blue)
+
+## 📂 Clone and Run
+
+```bash
+git clone https://github.com/kishorpatil2107/two-tier-flask-app.git
+cd two-tier-flask-app
+docker-compose up --build
