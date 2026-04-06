@@ -29,9 +29,9 @@ jobs:
       mysql:
         image: mysql:5.7
         env:
-          MYSQL_ROOT_PASSWORD: root      # ✅ required by mysql:5.7
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: devops
-          MYSQL_USER: admin              # ✅ MYSQL_USER not MYSQL_USERNAME
+          MYSQL_USER: admin
           MYSQL_PASSWORD: admin
         ports:
           - 3306:3306
@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y pkg-config default-libmysqlclient-dev build-essential
           pip install -r requirements.txt
       - name: run tests
-        env: |
+        env:
           MYSQL_HOST: 127.0.0.1
           MYSQL_USER: admin
           MYSQL_PASSWORD: admin
@@ -71,13 +71,12 @@ jobs:
       - name: build and push
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/two-tier-app:latest .
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/two-tier-app:${{ github.sha }} .
+                       -t ${{ secrets.DOCKER_USERNAME }}/two-tier-app:${{ github.sha }} .
           docker push ${{ secrets.DOCKER_USERNAME }}/two-tier-app:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/two-tier-app:${{ github.sha }}
-
   notify-success:
     runs-on: ubuntu-latest
-    needs: [lint, test, build]
+    needs: [lint, test]
     if: success()
     steps:
       - name: Notify success
@@ -101,7 +100,7 @@ jobs:
 
   notify-failure:
     runs-on: ubuntu-latest
-    needs: [lint, test, build]
+    needs: [lint, test]
     if: failure()
     steps:
       - name: Notify failure
