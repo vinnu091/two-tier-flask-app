@@ -1,3 +1,4 @@
+"""Two tier flask application."""
 import os
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_mysqldb import MySQL
@@ -33,6 +34,10 @@ def hello():
     cur.close()
     return render_template('index.html', messages=messages)
 
+@app.route('/health')
+def health():
+    return jsonify({'status': 'healthy'}), 200
+
 @app.route('/submit', methods=['POST'])
 def submit():
     new_message = request.form.get('new_message')
@@ -44,5 +49,5 @@ def submit():
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
+    debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    app.run(host='0.0.0.0', port=5000, debug=debug)
