@@ -52,7 +52,7 @@ jobs:
           pip install -r requirements.txt
       - name: run tests
         env: |
-          MYSQL_HOST: 127.0.0.1    # ✅ use 127.0.0.1 not "mysql" in GH Actions
+          MYSQL_HOST: 127.0.0.1
           MYSQL_USER: admin
           MYSQL_PASSWORD: admin
           MYSQL_DB: devops
