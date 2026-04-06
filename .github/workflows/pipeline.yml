@@ -51,7 +51,7 @@ jobs:
           sudo apt-get install -y pkg-config default-libmysqlclient-dev build-essential
           pip install -r requirements.txt
       - name: run tests
-        run: |
+        env: |
           MYSQL_HOST: 127.0.0.1    # ✅ use 127.0.0.1 not "mysql" in GH Actions
           MYSQL_USER: admin
           MYSQL_PASSWORD: admin
