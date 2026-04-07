@@ -1,29 +1,41 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+import time
+from flask import Flask, render_template, request, jsonify
 from flask_mysqldb import MySQL
+from MySQLdb import OperationalError
 
 app = Flask(__name__)
 
-# Configure MySQL from environment variables
+# MySQL configuration
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'default_user')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD', 'default_password')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'default_db')
 
-# Initialize MySQL
 mysql = MySQL(app)
 
 def init_db():
-    with app.app_context():
-        cur = mysql.connection.cursor()
-        cur.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            message TEXT
-        );
-        ''')
-        mysql.connection.commit()  
-        cur.close()
+    retries = 10
+    while retries > 0:
+        try:
+            with app.app_context():
+                cur = mysql.connection.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS messages (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        message TEXT
+                    );
+                """)
+                mysql.connection.commit()
+                cur.close()
+                print("✅ Database initialized")
+                return
+        except OperationalError as e:
+            retries -= 1
+            print(f"⏳ Waiting for MySQL... retries left: {retries}")
+            time.sleep(5)
+
+    raise RuntimeError("❌ Could not connect to MySQL")
 
 @app.route('/')
 def hello():
@@ -44,5 +56,4 @@ def submit():
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
-
+    app.run(host='0.0.0.0', port=5000)

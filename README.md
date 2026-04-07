@@ -1,130 +1,61 @@
- 
-# Flask App with MySQL Docker Setup
+# Secure Multi-Tier Application Deployment on AWS EKS
 
-This is a simple Flask app that interacts with a MySQL database. The app allows users to submit messages, which are then stored in the database and displayed on the frontend.
+## 📌 Project Overview
+This project demonstrates the deployment of a high-availability, secure two-tier web application (**Flask & MySQL**) on a managed **Amazon EKS (Elastic Kubernetes Service)** cluster. The architecture focuses on production-readiness, implementing persistent data layers, automated load balancing, and a "Shift-Left" security strategy. 
 
-## Prerequisites
+The primary goal was to move from a monolithic setup to a cloud-native, containerized environment that handles scaling and self-healing automatically.
 
-Before you begin, make sure you have the following installed:
+---
 
-- Docker
-- Git (optional, for cloning the repository)
+## 🏗 System Architecture & Traffic Flow
 
-## Setup
+**Traffic Path:**
+`User` → `Network Load Balancer (NLB)` → `EKS Worker Nodes` → `Flask Pods` → `MySQL Service (ClusterIP)` → `MySQL Pod` → `Amazon EBS`
 
-1. Clone this repository (if you haven't already):
+---
 
-   ```bash
-   git clone https://github.com/your-username/your-repo-name.git
-   ```
+## 🛠 Tech Stack
+* **Cloud:** AWS (EKS, VPC, IAM, EBS, NLB, Route 53)
+* **Orchestration:** Kubernetes, Helm
+* **Security:** Trivy, SonarQube, IAM Roles for Service Accounts (IRSA)
+* **CI/CD:** Jenkins
+* **Application:** Flask (Python), MySQL
 
-2. Navigate to the project directory:
+---
 
-   ```bash
-   cd your-repo-name
-   ```
+## 🔍 Troubleshooting: The Networking Challenge
+During initial deployment, Flask pods faced `503 Service Unavailable` errors because they couldn't reach the MySQL database.
 
-3. Create a `.env` file in the project directory to store your MySQL environment variables:
+### **The Root Cause:**
+* **Security Group Isolation:** Worker nodes were in different subnets, and the default security group blocked port **3306**.
+* **DNS Resolution:** The Flask pods couldn't resolve the `mysql-service` internal DNS name.
 
-   ```bash
-   touch .env
-   ```
+### **The Fix:**
+1. **Security Group Update:** Added a self-referencing rule to the EKS Node Security Group to allow inbound traffic from itself on all ports.
+2. **CoreDNS Verification:** Restarted CoreDNS to refresh the internal service discovery mapping.
+3. **Validation:** Confirmed connectivity using a `busybox` pod with `nslookup` and `telnet`.
 
-4. Open the `.env` file and add your MySQL configuration:
+---
 
-   ```
-   MYSQL_HOST=mysql
-   MYSQL_USER=your_username
-   MYSQL_PASSWORD=your_password
-   MYSQL_DB=your_database
-   ```
+## 🛡️ Security Implementation (Shift-Left)
+* **Vulnerability Scanning:** Automated **Trivy** scans in the pipeline; builds fail on "Critical" vulnerabilities.
+* **Static Analysis:** **SonarQube** gates ensure code quality and credential safety.
+* **Least Privilege:** Used **IRSA** to give pods specific permissions to manage EBS volumes without giving full EC2 access.
+* **Data Persistence:** Decoupled data using **AWS EBS** to ensure database state survives pod restarts.
 
-## Usage
+---
 
-1. Start the containers using Docker Compose:
+## 🚀 How to Deploy
 
-   ```bash
-   docker-compose up --build
-   ```
+### 1. Prerequisites
+* AWS CLI configured.
+* `kubectl` and `helm` installed.
+* An existing EKS Cluster.
 
-2. Access the Flask app in your web browser:
-
-   - Frontend: http://localhost
-   - Backend: http://localhost:5000
-
-3. Create the `messages` table in your MySQL database:
-
-   - Use a MySQL client or tool (e.g., phpMyAdmin) to execute the following SQL commands:
-   
-     ```sql
-     CREATE TABLE messages (
-         id INT AUTO_INCREMENT PRIMARY KEY,
-         message TEXT
-     );
-     ```
-
-4. Interact with the app:
-
-   - Visit http://localhost to see the frontend. You can submit new messages using the form.
-   - Visit http://localhost:5000/insert_sql to insert a message directly into the `messages` table via an SQL query.
-
-## Cleaning Up
-
-To stop and remove the Docker containers, press `Ctrl+C` in the terminal where the containers are running, or use the following command:
-
+### 2. Infrastructure Setup
 ```bash
-docker-compose down
-```
+# Install the EBS CSI Driver
+kubectl apply -k "[https://github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.x](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/deploy/kubernetes/overlays/stable/?ref=release-1.x)"
 
-## To run this two-tier application using  without docker-compose
-
-- First create a docker image from Dockerfile
-```bash
-docker build -t flaskapp .
-```
-
-- Now, make sure that you have created a network using following command
-```bash
-docker network create twotier
-```
-
-- Attach both the containers in the same network, so that they can communicate with each other
-
-i) MySQL container 
-```bash
-docker run -d \
-    --name mysql \
-    -v mysql-data:/var/lib/mysql \
-    --network=twotier \
-    -e MYSQL_DATABASE=mydb \
-    -e MYSQL_ROOT_PASSWORD=admin \
-    -p 3306:3306 \
-    mysql:5.7
-
-```
-ii) Backend container
-```bash
-docker run -d \
-    --name flaskapp \
-    --network=twotier \
-    -e MYSQL_HOST=mysql \
-    -e MYSQL_USER=root \
-    -e MYSQL_PASSWORD=admin \
-    -e MYSQL_DB=mydb \
-    -p 5000:5000 \
-    flaskapp:latest
-
-```
-
-## Notes
-
-- Make sure to replace placeholders (e.g., `your_username`, `your_password`, `your_database`) with your actual MySQL configuration.
-
-- This is a basic setup for demonstration purposes. In a production environment, you should follow best practices for security and performance.
-
-- Be cautious when executing SQL queries directly. Validate and sanitize user inputs to prevent vulnerabilities like SQL injection.
-
-- If you encounter issues, check Docker logs and error messages for troubleshooting.
-
-```
-
+# Deploy Application via Helm
+helm install flask-app ./charts/flask-app-chart
